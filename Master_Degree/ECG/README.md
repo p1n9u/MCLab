@@ -55,11 +55,11 @@
 
 [ 4. ECG Waveform Interpretation ]   
 
-<img src="/Img/interpretation.png">
+<img src="./Img/interpretation.png">
 
 [ 5. Improvement and Development direction ]
 
-<img src="/Img/improve.png">
+<img src="./Img/improve.png">
 
 [ 6. Reference ]   
 
