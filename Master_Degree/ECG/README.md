@@ -11,7 +11,7 @@
 [ 0. Demo ] : Click Image to Watch Demo Video!  
 
 
-[![Video Label](/Img/sum.jpg)](https://youtu.be/-y_3mwoVeGI)   
+[![Video Label](./Img/sum.jpg)](https://youtu.be/-y_3mwoVeGI)   
 
 [ 1. Project Goal ]
 - 심장마비환자의 생존확률은 ‘골든 타임’이라는 심장 마비에서부터 실질적인 제세동 및 약물 투입 시기까지 의 지연시간에 크게 영향을 받는다. 본 과제에서는 이동통신망 기반의 사물통신인 LTE Cat-M1에 기반하여 심장질환자의 EKG 정보를 실시간으로 상시 확인할 수 있는 플랫폼을 제공 함으로써 각종 심장 이상 증상에 대한 조기 징후를 의료진에게 제공하여 심각한 심장 이상이 발생하기 전에 미리 적절한 의료 조치를 제공 하여 실제 심장 마비가 발생하는 것을 미연에 방 지할 수 있을 것으로 기대된다. 또한, 트라우마 등에 의해 예고치 않게 급성 심장 마비가 발생할 경우, 이동통신망의 위치 정보 (A-GPS)를 활용하여 즉각적으로 응급구조사에게 환자의 위치를 알려 줄 뿐만 아니라, 기존 원내 환자 기록 및 PACS(Picture Archiving andCommunication System) 등 의료 데이터베이스까지 실시간으로 전문의료진에 제공하여 실제 원내에서만 처방 가능한 에피네프린이나 리도케인 등 전문의약품을 전문의료진의 지시하에 응급구조사가 응급구조 현장에서 조기 투여함으로써 환자의 생존률을 In-Hospital Cardiac Arrest의 수준까지 높일 수 있을 것으로 기대된다. 
@@ -35,23 +35,23 @@
 [ 3. Design and fabrication process ]   
 - Testbed
 
-<img src="/Img/testbed.png">
+<img src="./Img/testbed.png">
 
 - System block diagram
 
-<img src="/Img/diagram.png">
+<img src="./Img/diagram.png">
 
 - ECG Signal Acquisition and Transmission
 
-<img src="/Img/signal.png">
+<img src="./Img/signal.png">
 
 - ECG Waveform Presentation
 
-<img src="/Img/waveform.png">
+<img src="./Img/waveform.png">
 
 - User Interface
 
-<img src="/Img/ui.png">
+<img src="./Img/ui.png">
 
 [ 4. ECG Waveform Interpretation ]   
 
