@@ -27,10 +27,22 @@ typedef union {
 	char data[2];
 } ECG;
 
+typedef struct {
+	int idx;
+	unsigned value:10;
+} E_DATA;
+
+int push_csv(char*, E_DATA*);
+
 element buf[BUF_SIZE];
 
 /* main */
 int main(int argc, char *argv[]) {
+
+	char filename[100];
+	printf("filename : ");
+	scanf("%s", filename);
+	strcat(filename, ".csv");
 
 	int clen, sfd, cfd, n;
 	struct sockaddr_in saddr, caddr;
@@ -76,6 +88,7 @@ int main(int argc, char *argv[]) {
 		haddrp = inet_ntoa(caddr.sin_addr);
 		printf("    >> CLIENT : %s(%d) connected\n", haddrp, caddr.sin_port);
 
+		int value_idx=0;
 		while(TRUE) {
 			int status, fd[2], val_idx=0;
 			pipe(fd);
@@ -89,25 +102,50 @@ int main(int argc, char *argv[]) {
 			} else {
 				waitpid(pid, &status, 0);
 				read(fd[0], buf, sizeof(buf));
-				printf("Buf received data, prosseing...\n");
+				printf("Buf received data, prosseing.\n");
 
-				int i;
+				int i; ECG e; E_DATA ed; E_DATA eda[BUF_SIZE/2];
 				for ( i=0; i<BUF_SIZE/2; i++ ) {
-					ECG v;
-					v.data[0] = buf[i*2];
-					v.data[1] = buf[i*2+1];
-					printf("%5d ", v.value);
-					if ( (i+1)%16 == 0 ) {
+					e.data[0] = buf[i*2];
+					e.data[1] = buf[i*2+1];
+
+					ed.idx = value_idx;
+					ed.value = e.value;
+					eda[i] = ed;
+
+					printf("[%5d]:%5d ", eda[i].idx, eda[i].value);
+					if ( (i+1)%8 == 0 ) {
 						printf("\n");
 					}
+					value_idx++;
 				}
+				push_csv(filename, eda); 
 			}
 
 		}
+
 		printf("exit\n");
                 close(cfd);
 
 	}
 	close(sfd);
+	return 0;
+}
+
+int push_csv(char* filename, E_DATA* eda) {
+	FILE *fp;
+	//printf("[%s.csv] file open", filename);
+	if ( eda[0].idx == 0 ) {
+		fp = fopen(filename, "w+");
+		fprintf(fp, "Index, ECG Value\n");
+	} else {
+		fp = fopen(filename, "a");
+	}
+
+	int i;
+	for ( i=0; i<BUF_SIZE/2; i++ ){
+		fprintf(fp, "%d,%d\n", eda[i].idx, eda[i].value);
+	}
+	fclose(fp);
 	return 0;
 }
