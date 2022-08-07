@@ -15,9 +15,6 @@ void setup() {
     pinMode(10, INPUT); // Setup for leads off detection LO +
     pinMode(11, INPUT); // Setup for leads off detection LO -
     
-    /* debug ecg data if not use comment */
-    randomSeed(analogRead(0));
-
     /* BG96 Power On Sequence */
     if ( BG96.isPwrON() ) {
         DebugSerial.println("BG96 Power ON Status");
@@ -80,13 +77,12 @@ int ecg_data, loop_cnt = 0;
 ECG v;
 
 void loop() {
-    
-    /// ecg_data = random(0, 1023);
+
     DebugSerial.print("[data test] : ");
     DebugSerial.println(loop_cnt);
 
     /* data processing */
-    v.value = loop_cnt;
+    v.value = analogRead(A0);
     buf[loop_cnt*2] = v.data[0];
     buf[loop_cnt*2+1] = v.data[1];
     loop_cnt++;
