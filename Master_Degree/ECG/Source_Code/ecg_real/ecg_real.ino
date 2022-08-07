@@ -77,28 +77,26 @@ int ecg_data, loop_cnt = 0;
 ECG v;
 
 void loop() {
-
-    DebugSerial.print("[data test] : ");
-    DebugSerial.println(loop_cnt);
-
     /* data processing */
     v.value = analogRead(A0);
     buf[loop_cnt*2] = v.data[0];
     buf[loop_cnt*2+1] = v.data[1];
     loop_cnt++;
+
+    DebugSerial.print("[value] : ");
+    DebugSerial.println(v.value);
    
     if ( loop_cnt == 512 ) {
-        DebugSerial.print("[loop cnt] :");
-        DebugSerial.println(loop_cnt);
-        DebugSerial.println("Buf filled!!!");
+        DebugSerial.print("[loop count] :");
+        DebugSerial.print(loop_cnt);
+        DebugSerial.println(", Buf filled!!!");
         if ( BG96.socketSend( buf, sizeof(buf) ) == 0 ) {
             DebugSerial.println("Send Success!!!");
         } else {
             DebugSerial.println("Send Fail!!!");
         }
         loop_cnt = 0;
-        DebugSerial.print("[loop cnt] :");
-        DebugSerial.println(loop_cnt);
+        DebugSerial.println("clear buf");
         memset(buf, '\0', BUF_SIZE*sizeof(char));
     }
 
