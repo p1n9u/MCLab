@@ -16,7 +16,7 @@
 
 /* define macro */
 #define DEFAULT_PROTOCOL 0
-#define BUF_SIZE 480
+#define BUF_SIZE 420
 #define PORT 8080
 #define TRUE 1
 #define FALSE 0
@@ -33,13 +33,18 @@ typedef union {
 	char data[1];
 } TIMESTAMP;
 
+typedef union {
+	unsigned value:10;
+	char data[2];
+} MS;
+
 typedef struct {
 	int idx;
 	unsigned value:10;
 	unsigned hours:8;
 	unsigned minutes:8;
 	unsigned seconds:8;
-	unsigned millis:8;
+	unsigned millis:10;
 } E_DATA;
 
 
@@ -97,14 +102,15 @@ int main(int argc, char *argv[]) {
 				read(fd[0], buf, sizeof(buf));
 				printf("Buf received data, prosseing.\n");
 
-				int i; ECG e; TIMESTAMP thr, tmn, tsc, tmm; E_DATA ed; E_DATA eda[BUF_SIZE/6];
-				for ( i=0; i<BUF_SIZE/6; i++ ) {
-					thr.data[0] = buf[i*6];
-					tmn.data[0] = buf[i*6+1];
-					tsc.data[0] = buf[i*6+2];
-					tmm.data[0] = buf[i*6+3];
-					e.data[0] = buf[i*6+4];
-					e.data[1] = buf[i*6+5];
+				int i; ECG e; TIMESTAMP thr, tmn, tsc; MS tmm; E_DATA ed; E_DATA eda[BUF_SIZE/6];
+				for ( i=0; i<BUF_SIZE/7; i++ ) {
+					thr.data[0] = buf[i*7];
+					tmn.data[0] = buf[i*7+1];
+					tsc.data[0] = buf[i*7+2];
+					tmm.data[0] = buf[i*7+3];
+					tmm.data[1] = buf[i*7+4];
+					e.data[0] = buf[i*7+5];
+					e.data[1] = buf[i*7+6];
 
 					ed.idx = value_idx;
 					ed.value = e.value;
@@ -113,7 +119,7 @@ int main(int argc, char *argv[]) {
 					ed.seconds = tsc.value;
 					ed.millis = tmm.value;
 					eda[i] = ed;
-					printf("[%2d:%2d:%2d.%2d] : %5d", eda[i].hours, eda[i].minutes, eda[i].seconds, eda[i].millis, eda[i].value);
+					printf("[%2d:%2d:%2d.%-3d] : %5d ", eda[i].hours, eda[i].minutes, eda[i].seconds, eda[i].millis, eda[i].value);
 					if ( (i+1)%5 == 0 ) {
 						printf("\n");
 					}
@@ -137,8 +143,8 @@ int push_csv(char* filename, E_DATA* eda) {
 	}
 
 	int i;
-	for ( i=0; i<BUF_SIZE/6; i++ ){
-		fprintf(fp, "%d,%d:%d:%d.%d,%d\n", eda[i].idx, eda[i].hours, eda[i].minutes, eda[i].seconds, eda[i].millis, eda[i].value);
+	for ( i=0; i<BUF_SIZE/7; i++ ){
+		fprintf(fp, "%d,%d:%d:%d:%d,%d\n", eda[i].idx, eda[i].hours, eda[i].minutes, eda[i].seconds, eda[i].millis, eda[i].value);
 	}
 	fclose(fp);
 	return 0;
