@@ -4,7 +4,7 @@
 #define ECGSerial       Serial2
 #define PWR_PIN         2
 #define STAT_PIN        3
-#define BUF_SIZE        480
+#define BUF_SIZE        420
 #define TCP_IP          "166.104.185.207"
 #define TCP_PORT        8080;
 
@@ -20,3 +20,8 @@ typedef union {
     unsigned value:8;
     char data[1];
 } TIMESTAMP;
+
+typedef union {
+    unsigned value:10;
+    char data[2];
+} MS;

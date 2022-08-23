@@ -4,6 +4,8 @@
 #include "ECG.h"
 #include <swRTC.h>
 
+extern volatile unsigned long timer0_millis;
+
 /* buf */
 element buf[BUF_SIZE];
 
@@ -12,8 +14,8 @@ swRTC rtc;
 
 void setup() {
     rtc.stopRTC();
-    rtc.setTime(19,57,00); // hh, mm, ss
-    rtc.setDate(20,8,2022); // DD, MM, YY 
+    rtc.setTime(19,04,00); // hh, mm, ss
+    rtc.setDate(23,8,2022); // DD, MM, YY 
     rtc.startRTC(); 
   
     M1Serial.begin(115200);
@@ -83,9 +85,11 @@ void setup() {
 
 
 /* loop */
-int ecg_data, i = 0;
+int ecg_data, i = 0, ms=0;
 ECG v;
-TIMESTAMP thr, tmn, tsc, tmm;
+TIMESTAMP thr, tmn, tsc;
+MS tmm;
+int cur_sec, pre_sec;
 
 void loop() {
     /* data processing v(2)+thr(1)+tmn(1)+tsc(1)+tmm(1) = 6 bytes */
@@ -93,15 +97,27 @@ void loop() {
     //v.value = i;
     thr.value = rtc.getHours();
     tmn.value = rtc.getMinutes();
-    tsc.value = rtc.getSeconds();
-    tmm.value = millis()%100;
+    tsc.value = cur_sec = rtc.getSeconds();
+ 
+    if ( cur_sec < pre_sec ){
+      pre_sec = -1;  
+    }
+    
+    if ( cur_sec > pre_sec ) {
+      ms=0;
+      pre_sec = cur_sec;
+    }
 
-    buf[i*6] = thr.data[0];
-    buf[i*6+1] = tmn.data[0];
-    buf[i*6+2] = tsc.data[0];
-    buf[i*6+3] = tmm.data[0];
-    buf[i*6+4] = v.data[0];
-    buf[i*6+5] = v.data[1];
+    tmm.value = ms;
+    ms += 10;
+
+    buf[i*7] = thr.data[0];
+    buf[i*7+1] = tmn.data[0];
+    buf[i*7+2] = tsc.data[0];
+    buf[i*7+3] = tmm.data[0];
+    buf[i*7+4] = tmm.data[1];
+    buf[i*7+5] = v.data[0];
+    buf[i*7+6] = v.data[1];
 
     /* debug serial */
     DebugSerial.print("[value] : ");
@@ -112,12 +128,12 @@ void loop() {
     DebugSerial.print(tmn.value);
     DebugSerial.print(":");
     DebugSerial.print(tsc.value);
-    DebugSerial.print(".");
+    DebugSerial.print(":");
     DebugSerial.println(tmm.value);
 
     i++;
    
-    if ( i == 80 ) {
+    if ( i == 60 ) {
         DebugSerial.print("[count] :");
         DebugSerial.print(i);
         DebugSerial.println(", Buf filled!!!");
@@ -131,5 +147,5 @@ void loop() {
         memset(buf, '\0', BUF_SIZE*sizeof(char));
     }
     
-    delay(1);
+    delay(11);
 }
