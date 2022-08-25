@@ -16,7 +16,7 @@
 
 /* define macro */
 #define DEFAULT_PROTOCOL 0
-#define BUF_SIZE 420
+#define BUF_SIZE 540
 #define PORT 8080
 #define TRUE 1
 #define FALSE 0
@@ -41,7 +41,6 @@ typedef union {
 typedef struct {
 	int idx;
 	unsigned value:10;
-	unsigned hours:8;
 	unsigned minutes:8;
 	unsigned seconds:8;
 	unsigned millis:10;
@@ -102,24 +101,22 @@ int main(int argc, char *argv[]) {
 				read(fd[0], buf, sizeof(buf));
 				printf("Buf received data, prosseing.\n");
 
-				int i; ECG e; TIMESTAMP thr, tmn, tsc; MS tmm; E_DATA ed; E_DATA eda[BUF_SIZE/6];
+				int i; ECG e; TIMESTAMP mn, sc; MS ms; E_DATA ed; E_DATA eda[BUF_SIZE/6];
 				for ( i=0; i<BUF_SIZE/7; i++ ) {
-					thr.data[0] = buf[i*7];
-					tmn.data[0] = buf[i*7+1];
-					tsc.data[0] = buf[i*7+2];
-					tmm.data[0] = buf[i*7+3];
-					tmm.data[1] = buf[i*7+4];
-					e.data[0] = buf[i*7+5];
-					e.data[1] = buf[i*7+6];
+					mn.data[0] = buf[i*6];
+					sc.data[0] = buf[i*6+1];
+					ms.data[0] = buf[i*6+2];
+					ms.data[1] = buf[i*6+3];
+					e.data[0] = buf[i*6+4];
+					e.data[1] = buf[i*6+5];
 
 					ed.idx = value_idx;
 					ed.value = e.value;
-					ed.hours = thr.value;
-					ed.minutes = tmn.value;
-					ed.seconds = tsc.value;
-					ed.millis = tmm.value;
+					ed.minutes = mn.value;
+					ed.seconds = sc.value;
+					ed.millis = ms.value;
 					eda[i] = ed;
-					printf("[%2d:%2d:%2d.%-3d] : %5d ", eda[i].hours, eda[i].minutes, eda[i].seconds, eda[i].millis, eda[i].value);
+					printf("[%-2d:%-2d.%-3d] : %5d ", eda[i].minutes, eda[i].seconds, eda[i].millis, eda[i].value);
 					if ( (i+1)%5 == 0 ) {
 						printf("\n");
 					}
@@ -144,7 +141,7 @@ int push_csv(char* filename, E_DATA* eda) {
 
 	int i;
 	for ( i=0; i<BUF_SIZE/7; i++ ){
-		fprintf(fp, "%d,%d:%d:%d:%d,%d\n", eda[i].idx, eda[i].hours, eda[i].minutes, eda[i].seconds, eda[i].millis, eda[i].value);
+		fprintf(fp, "%d,%d:%d:%d,%d\n", eda[i].idx, eda[i].minutes, eda[i].seconds, eda[i].millis, eda[i].value);
 	}
 	fclose(fp);
 	return 0;
