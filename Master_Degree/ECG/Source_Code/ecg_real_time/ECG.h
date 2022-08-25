@@ -4,7 +4,7 @@
 #define ECGSerial       Serial2
 #define PWR_PIN         2
 #define STAT_PIN        3
-#define BUF_SIZE        420
+#define BUF_SIZE        540
 #define TCP_IP          "166.104.185.207"
 #define TCP_PORT        8080;
 

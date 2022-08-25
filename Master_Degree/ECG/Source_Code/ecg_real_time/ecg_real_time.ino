@@ -2,22 +2,14 @@
 #include <Arduino.h>
 #include "BG96.h"
 #include "ECG.h"
-#include <swRTC.h>
-
-extern volatile unsigned long timer0_millis;
 
 /* buf */
 element buf[BUF_SIZE];
 
 BG96 BG96(M1Serial, DebugSerial, PWR_PIN, STAT_PIN);
-swRTC rtc;
 
 void setup() {
-    rtc.stopRTC();
-    rtc.setTime(19,04,00); // hh, mm, ss
-    rtc.setDate(23,8,2022); // DD, MM, YY 
-    rtc.startRTC(); 
-  
+
     M1Serial.begin(115200);
     DebugSerial.begin(115200);
     ECGSerial.begin(115200);
@@ -84,56 +76,46 @@ void setup() {
 
 
 
-/* loop */
-int ecg_data, i = 0, ms=0;
-ECG v;
-TIMESTAMP thr, tmn, tsc;
-MS tmm;
-int cur_sec, pre_sec;
+/* loop arguments */
+int i = 0;
+ECG e;
+TIMESTAMP mn, sc;
+MS ms;
+unsigned long t;
 
 void loop() {
-    /* data processing v(2)+thr(1)+tmn(1)+tsc(1)+tmm(1) = 6 bytes */
-    v.value = analogRead(A0);
-    //v.value = i;
-    thr.value = rtc.getHours();
-    tmn.value = rtc.getMinutes();
-    tsc.value = cur_sec = rtc.getSeconds();
- 
-    if ( cur_sec < pre_sec ){
-      pre_sec = -1;  
-    }
-    
-    if ( cur_sec > pre_sec ) {
-      ms=0;
-      pre_sec = cur_sec;
-    }
+    /* data processing e(2) + mn(1) + sc(1) + ms(2) = 6 bytes */
+    e.value = analogRead(A0);
+    //e.value = i;
 
-    tmm.value = ms;
-    ms += 10;
+    /* minutes : mn, seconds : sc, millis : ms */
+    t = millis();
+    ms.value = t%1000;
+    sc.value = (t/1000)%60;
+    mn.value = (t/1000)/60;
 
-    buf[i*7] = thr.data[0];
-    buf[i*7+1] = tmn.data[0];
-    buf[i*7+2] = tsc.data[0];
-    buf[i*7+3] = tmm.data[0];
-    buf[i*7+4] = tmm.data[1];
-    buf[i*7+5] = v.data[0];
-    buf[i*7+6] = v.data[1];
+    /* fill buffer */
+    buf[i*6] = mn.data[0];
+    buf[i*6+1] = sc.data[0];
+    buf[i*6+2] = ms.data[0];
+    buf[i*6+3] = ms.data[1];
+    buf[i*6+4] = e.data[0];
+    buf[i*7+5] = e.data[1];
 
     /* debug serial */
-    DebugSerial.print("[value] : ");
-    DebugSerial.print(v.value);
+    DebugSerial.print("[ECG value] : ");
+    DebugSerial.print(e.value);
     DebugSerial.print(", [TimeStamp] : ");
-    DebugSerial.print(thr.value);
+    DebugSerial.print(mn.value);
     DebugSerial.print(":");
-    DebugSerial.print(tmn.value);
+    DebugSerial.print(sc.value);
     DebugSerial.print(":");
-    DebugSerial.print(tsc.value);
-    DebugSerial.print(":");
-    DebugSerial.println(tmm.value);
+    DebugSerial.println(ms.value);
 
     i++;
-   
-    if ( i == 60 ) {
+
+    /* send buffer */
+    if ( i == 90 ) {
         DebugSerial.print("[count] :");
         DebugSerial.print(i);
         DebugSerial.println(", Buf filled!!!");
@@ -146,6 +128,6 @@ void loop() {
         DebugSerial.println("clear buf");
         memset(buf, '\0', BUF_SIZE*sizeof(char));
     }
-    
-    delay(11);
+
+    delay(1);
 }
