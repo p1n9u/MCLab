@@ -2,22 +2,26 @@
 #include <Arduino.h>
 #include "BG96.h"
 #include "ECG.h"
+#include <swRTC.h>
 
 /* buf */
 element buf[BUF_SIZE];
 
 BG96 BG96(M1Serial, DebugSerial, PWR_PIN, STAT_PIN);
+swRTC rtc;
 
 void setup() {
+    rtc.stopRTC();
+    rtc.setTime(19,57,00); // hh, mm, ss
+    rtc.setDate(20,8,2022); // DD, MM, YY 
+    rtc.startRTC(); 
+  
     M1Serial.begin(115200);
     DebugSerial.begin(115200);
     ECGSerial.begin(115200);
     pinMode(10, INPUT); // Setup for leads off detection LO +
     pinMode(11, INPUT); // Setup for leads off detection LO -
     
-    /* debug ecg data if not use comment */
-    randomSeed(analogRead(0));
-
     /* BG96 Power On Sequence */
     if ( BG96.isPwrON() ) {
         DebugSerial.println("BG96 Power ON Status");
@@ -66,53 +70,65 @@ void setup() {
         DebugSerial.println("BG96 PDP Activation!!!");
     }
 
-    if ( BG96.socketCreate(1, _IP, _PORT) == 0 ) {
-        DebugSerial.println("TCP Socket Create!!!");
+    /* first arg 0 : UDP, 1 : TCP */
+    if ( BG96.socketCreate(0, _IP, _PORT) == 0 ) {
+        DebugSerial.println("Socket Create!!!");
     }
 
     memset(buf, '\0', BUF_SIZE*sizeof(char));
     DebugSerial.println("Setup Done!!!");
-    delay(1000);
-    
+    delay(1000);   
 }
 
+
+
 /* loop */
-int ecg_data, loop_cnt = 0, chk = 1;
+int ecg_data, i = 0;
 ECG v;
-unsigned long curtime, pretime, elstime=0, buftime=0;
+TIMESTAMP thr, tmn, tsc, tmm;
 
 void loop() {
-    if ( chk ) {
-        pretime = millis();
-        chk = 0; 
-    }
-    curtime = millis() - pretime - buftime;
-    /// ecg_data = random(0, 1023);
-    DebugSerial.print(curtime);
-    DebugSerial.print(" - [data test] : ");
-    DebugSerial.println(loop_cnt);
+    /* data processing v(2)+thr(1)+tmn(1)+tsc(1)+tmm(1) = 6 bytes */
+    v.value = analogRead(A0);
+    //v.value = i;
+    thr.value = rtc.getHours();
+    tmn.value = rtc.getMinutes();
+    tsc.value = rtc.getSeconds();
+    tmm.value = millis()%100;
 
-    /* data processing */
-    v.value = loop_cnt;
-    buf[loop_cnt*2] = v.data[0];
-    buf[loop_cnt*2+1] = v.data[1];
-    loop_cnt++;
+    buf[i*6] = thr.data[0];
+    buf[i*6+1] = tmn.data[0];
+    buf[i*6+2] = tsc.data[0];
+    buf[i*6+3] = tmm.data[0];
+    buf[i*6+4] = v.data[0];
+    buf[i*6+5] = v.data[1];
+
+    DebugSerial.print("[value] : ");
+    DebugSerial.print(v.value);
+    DebugSerial.print(", [TimeStamp] : ");
+    DebugSerial.print(thr.value);
+    DebugSerial.print(":");
+    DebugSerial.print(tmn.value);
+    DebugSerial.print(":");
+    DebugSerial.print(tsc.value);
+    DebugSerial.print(".");
+    DebugSerial.println(tmm.value);
+
+    i++;
    
-    if ( loop_cnt == 512 ) {
-        elstime = millis();
-        DebugSerial.print("[loop cnt] :");
-        DebugSerial.println(loop_cnt);
-        DebugSerial.println("Buf filled!!!");
+    if ( i == 80 ) {
+        DebugSerial.print("[count] :");
+        DebugSerial.print(i);
+        DebugSerial.println(", Buf filled!!!");
         if ( BG96.socketSend( buf, sizeof(buf) ) == 0 ) {
             DebugSerial.println("Send Success!!!");
         } else {
             DebugSerial.println("Send Fail!!!");
         }
-        loop_cnt = 0;
+        i = 0;
+        DebugSerial.println("clear buf");
         memset(buf, '\0', BUF_SIZE*sizeof(char));
-        elstime = millis() - elstime;
-        buftime += elstime;
     }
-
+    
     delay(1);
 }

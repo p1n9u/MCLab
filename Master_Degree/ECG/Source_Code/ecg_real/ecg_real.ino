@@ -2,13 +2,20 @@
 #include <Arduino.h>
 #include "BG96.h"
 #include "ECG.h"
+#include <swRTC.h>
 
 /* buf */
 element buf[BUF_SIZE];
 
 BG96 BG96(M1Serial, DebugSerial, PWR_PIN, STAT_PIN);
+swRTC rtc;
 
 void setup() {
+    rtc.stopRTC();
+    rtc.setTime(19,57,00); // hh, mm, ss
+    rtc.setDate(20,8,2022); // DD, MM, YY 
+    rtc.startRTC(); 
+  
     M1Serial.begin(115200);
     DebugSerial.begin(115200);
     ECGSerial.begin(115200);
@@ -70,6 +77,18 @@ void setup() {
     memset(buf, '\0', BUF_SIZE*sizeof(char));
     DebugSerial.println("Setup Done!!!");
     delay(1000);   
+}
+
+String getTimestamp() {
+  String ts = "";
+  ts += String(rtc.getHours());
+  ts += ":";
+  ts += String(rtc.getMinutes());
+  ts += ":";
+  ts += String(rtc.getSeconds());
+  ts += ".";
+  ts += String(millis()%1000);
+  return ts;
 }
 
 /* loop */
